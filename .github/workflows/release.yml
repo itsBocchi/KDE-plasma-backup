@@ -1,0 +1,33 @@
+name: Auto Release on File Change
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'topbar-dual-monitor.knsv'   # Trigger only when this file changes
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # Needed to create releases
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          lfs: true      # Important: fetches LFS files if you use LFS
+
+      - name: Get file hash for versioning
+        id: file_hash
+        run: echo "hash=$(sha256sum topbar-dual-monitor.knsv | cut -d ' ' -f 1)" >> $GITHUB_OUTPUT
+
+      - name: Create tag and release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ steps.file_hash.outputs.hash }}   # Use hash as version
+          name: Release ${{ steps.file_hash.outputs.hash }}
+          files: topbar-dual-monitor.knsv
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
